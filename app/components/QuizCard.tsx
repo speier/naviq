@@ -57,7 +57,7 @@ export default function QuizCard({ question, onAnswer, showResult, selectedAnswe
     <div className={`relative w-full ${isFlipping ? 'card-flip' : ''}`}>
       <div className="bg-white rounded-lg shadow-lg overflow-hidden w-full transition-opacity duration-300">
         <div className="p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">{question.question}</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4"><span className="mr-2 text-blue-600">{question.id}.</span>{question.question}</h2>
           
           {question.image && (
             <div className="mb-4 flex justify-center">
