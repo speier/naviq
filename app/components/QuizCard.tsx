@@ -10,8 +10,13 @@ interface QuizCardProps {
 
 export default function QuizCard({ question, onAnswer, showResult, selectedAnswer }: QuizCardProps) {
   const allAnswers = [question.correctAnswer, ...question.incorrectAnswers].filter(Boolean);
-  const [shuffledAnswers] = useState(() => [...allAnswers].sort(() => Math.random() - 0.5));
+  const [shuffledAnswers, setShuffledAnswers] = useState(() => [...allAnswers].sort(() => Math.random() - 0.5));
   const [isFlipping, setIsFlipping] = useState(false);
+  
+  // Reshuffle answers when the question changes
+  useEffect(() => {
+    setShuffledAnswers([...allAnswers].sort(() => Math.random() - 0.5));
+  }, [question.id]);
   
   // Determine if the selected answer is correct
   const isCorrect = selectedAnswer === question.correctAnswer;
