@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { QuizQuestion, QuizState } from '../types';
 import QuizCard from './QuizCard';
 import QuizProgress from './QuizProgress';
@@ -27,6 +27,9 @@ export default function Quiz({ questions }: QuizProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showJumpModal, setShowJumpModal] = useState(false);
+  
+  // Create a ref to store the timer ID
+  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
   
   // Track the number of answered questions
   const answeredQuestions = quizState.answers.filter(answer => answer !== null).length;
@@ -108,18 +111,20 @@ export default function Quiz({ questions }: QuizProps) {
     // Show the result with the checkmark/crossmark overlay
     setShowResult(true);
     
-    // Different timing based on whether the answer is correct or not
-    const delayBeforeFlip = isCorrect ? 2000 : 15000; // 2s for correct (1.5s overlay + 0.5s buffer), 15s for incorrect
+    // Set consistent timing based on user preference:
+    // 1. Show overlay with checkmark/crossmark for 1.5 seconds
+    // 2. Hide overlay but keep card with correct answer visible for 3.5 more seconds
+    // 3. Total time before moving to next card: 5 seconds
+    const totalDelay = 5000; // 5 seconds total before moving to next question
     
-    // Move to the next question after the appropriate delay
+    // Move to the next question after the total delay
     // We'll use a timer ID so we can clear it if the user clicks 'Next' manually
     const timerId = setTimeout(() => {
       moveToNextQuestion();
-    }, delayBeforeFlip);
+    }, totalDelay);
     
-    // Store the timer ID so we can clear it if needed
-    // @ts-ignore - Adding a property to window for simplicity
-    window.currentQuizTimer = timerId;
+    // Store the timer ID in the ref so we can clear it if needed
+    timerRef.current = timerId;
   };
   
   const restartQuiz = () => {
@@ -239,9 +244,9 @@ export default function Quiz({ questions }: QuizProps) {
         selectedAnswer={quizState.answers[quizState.currentQuestionIndex]}
         onNextQuestion={() => {
           // Clear the automatic timer when user manually clicks Next
-          // @ts-ignore - Accessing the property we added to window
-          if (window.currentQuizTimer) {
-            clearTimeout(window.currentQuizTimer);
+          if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = undefined;
           }
           moveToNextQuestion();
         }}

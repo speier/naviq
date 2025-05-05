@@ -23,33 +23,22 @@ export default function QuizCard({ question, onAnswer, showResult, selectedAnswe
   // Handle the flip animation when showing result
   useEffect(() => {
     if (showResult) {
-      // Check if the answer is correct inside the effect
-      const isAnswerCorrect = selectedAnswer === question.correctAnswer;
-      
-      // Show overlay for 1.5 seconds, then hide it
+      // Show overlay for 1.5 seconds, then hide it but keep the card visible
       const overlayTimer = setTimeout(() => {
         setShowOverlay(false);
-        
-        // If the answer was correct, start flipping immediately after overlay
-        if (isAnswerCorrect) {
-          setIsFlipping(true);
-        }
       }, 1500);
       
-      // Start flip animation after showing the result for 15 seconds (only needed for incorrect answers)
-      const flipTimer = setTimeout(() => {
-        setIsFlipping(true);
-      }, 15000);
+      // We don't need separate timers for correct/incorrect answers anymore
+      // as the parent component will handle moving to the next question after 5 seconds
       
       return () => {
         clearTimeout(overlayTimer);
-        clearTimeout(flipTimer);
       };
     } else {
       setIsFlipping(false);
       setShowOverlay(true); // Reset overlay for next question
     }
-  }, [showResult, selectedAnswer, question.correctAnswer]);
+  }, [showResult]);
 
 
   const getButtonClass = (answer: string) => {
@@ -101,8 +90,8 @@ export default function QuizCard({ question, onAnswer, showResult, selectedAnswe
             ))}
           </div>
           
-          {/* OK button to manually move forward - only shown after overlay disappears for incorrect answers */}
-          {showResult && !showOverlay && selectedAnswer !== question.correctAnswer && (
+          {/* Next Question button - shown after overlay disappears for both correct and incorrect answers */}
+          {showResult && !showOverlay && (
             <div className="mt-6 flex justify-center">
               <button
                 onClick={() => {
@@ -114,7 +103,7 @@ export default function QuizCard({ question, onAnswer, showResult, selectedAnswe
                 }}
                 className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors"
               >
-                OK, Next Question
+                Next Question
               </button>
             </div>
           )}
