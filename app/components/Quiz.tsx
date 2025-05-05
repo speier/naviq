@@ -68,6 +68,28 @@ export default function Quiz({ questions }: QuizProps) {
   
   const currentQuestion = questions[quizState.currentQuestionIndex];
   
+  // Function to move to the next question
+  const moveToNextQuestion = () => {
+    if (quizState.currentQuestionIndex < questions.length - 1) {
+      // Wait for the flip animation to complete before showing the next question
+      setTimeout(() => {
+        setQuizState(prev => ({
+          ...prev,
+          currentQuestionIndex: prev.currentQuestionIndex + 1
+        }));
+        setShowResult(false);
+      }, 500); // This matches the duration of the flip-out animation
+    } else {
+      // Quiz is complete
+      setTimeout(() => {
+        setQuizState(prev => ({
+          ...prev,
+          isComplete: true
+        }));
+      }, 500);
+    }
+  };
+
   const handleAnswer = (answer: string) => {
     // Update the answers array
     const newAnswers = [...quizState.answers];
@@ -86,27 +108,18 @@ export default function Quiz({ questions }: QuizProps) {
     // Show the result with the checkmark/crossmark overlay
     setShowResult(true);
     
-    // Move to the next question after a delay (2 seconds total: 1.5s for overlay + 0.5s for flip)
-    setTimeout(() => {
-      if (quizState.currentQuestionIndex < questions.length - 1) {
-        // Wait for the flip animation to complete before showing the next question
-        setTimeout(() => {
-          setQuizState(prev => ({
-            ...prev,
-            currentQuestionIndex: prev.currentQuestionIndex + 1
-          }));
-          setShowResult(false);
-        }, 500); // This matches the duration of the flip-out animation
-      } else {
-        // Quiz is complete
-        setTimeout(() => {
-          setQuizState(prev => ({
-            ...prev,
-            isComplete: true
-          }));
-        }, 500);
-      }
-    }, 1500);
+    // Different timing based on whether the answer is correct or not
+    const delayBeforeFlip = isCorrect ? 2000 : 15000; // 2s for correct (1.5s overlay + 0.5s buffer), 15s for incorrect
+    
+    // Move to the next question after the appropriate delay
+    // We'll use a timer ID so we can clear it if the user clicks 'Next' manually
+    const timerId = setTimeout(() => {
+      moveToNextQuestion();
+    }, delayBeforeFlip);
+    
+    // Store the timer ID so we can clear it if needed
+    // @ts-ignore - Adding a property to window for simplicity
+    window.currentQuizTimer = timerId;
   };
   
   const restartQuiz = () => {
@@ -223,7 +236,15 @@ export default function Quiz({ questions }: QuizProps) {
         question={currentQuestion} 
         onAnswer={handleAnswer} 
         showResult={showResult} 
-        selectedAnswer={quizState.answers[quizState.currentQuestionIndex]} 
+        selectedAnswer={quizState.answers[quizState.currentQuestionIndex]}
+        onNextQuestion={() => {
+          // Clear the automatic timer when user manually clicks Next
+          // @ts-ignore - Accessing the property we added to window
+          if (window.currentQuizTimer) {
+            clearTimeout(window.currentQuizTimer);
+          }
+          moveToNextQuestion();
+        }}
       />
       
       <div className="mt-6 flex justify-center space-x-4">

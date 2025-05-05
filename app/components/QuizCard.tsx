@@ -6,34 +6,51 @@ interface QuizCardProps {
   onAnswer: (answer: string) => void;
   showResult: boolean;
   selectedAnswer: string | null;
+  onNextQuestion?: () => void; // Optional callback for when user wants to move to next question
 }
 
-export default function QuizCard({ question, onAnswer, showResult, selectedAnswer }: QuizCardProps) {
+export default function QuizCard({ question, onAnswer, showResult, selectedAnswer, onNextQuestion }: QuizCardProps) {
   const allAnswers = [question.correctAnswer, ...question.incorrectAnswers].filter(Boolean);
   const [shuffledAnswers, setShuffledAnswers] = useState(() => [...allAnswers].sort(() => Math.random() - 0.5));
   const [isFlipping, setIsFlipping] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(true);
   
   // Reshuffle answers when the question changes
   useEffect(() => {
     setShuffledAnswers([...allAnswers].sort(() => Math.random() - 0.5));
   }, [question.id]);
   
-  // Determine if the selected answer is correct
-  const isCorrect = selectedAnswer === question.correctAnswer;
-  
   // Handle the flip animation when showing result
   useEffect(() => {
     if (showResult) {
-      // Start flip animation after showing the result for 1.5 seconds
-      const timer = setTimeout(() => {
-        setIsFlipping(true);
+      // Check if the answer is correct inside the effect
+      const isAnswerCorrect = selectedAnswer === question.correctAnswer;
+      
+      // Show overlay for 1.5 seconds, then hide it
+      const overlayTimer = setTimeout(() => {
+        setShowOverlay(false);
+        
+        // If the answer was correct, start flipping immediately after overlay
+        if (isAnswerCorrect) {
+          setIsFlipping(true);
+        }
       }, 1500);
       
-      return () => clearTimeout(timer);
+      // Start flip animation after showing the result for 15 seconds (only needed for incorrect answers)
+      const flipTimer = setTimeout(() => {
+        setIsFlipping(true);
+      }, 15000);
+      
+      return () => {
+        clearTimeout(overlayTimer);
+        clearTimeout(flipTimer);
+      };
     } else {
       setIsFlipping(false);
+      setShowOverlay(true); // Reset overlay for next question
     }
-  }, [showResult]);
+  }, [showResult, selectedAnswer, question.correctAnswer]);
+
 
   const getButtonClass = (answer: string) => {
     if (!showResult) {
@@ -42,13 +59,15 @@ export default function QuizCard({ question, onAnswer, showResult, selectedAnswe
         : 'bg-white text-gray-800 hover:bg-gray-100';
     }
     
+    // After showing result, only highlight the correct answer in green
     if (answer === question.correctAnswer) {
       return 'bg-green-600 text-white';
     }
     
-    if (selectedAnswer === answer && answer !== question.correctAnswer) {
-      return 'bg-red-600 text-white';
-    }
+    // Only show the overlay for incorrect answers, don't highlight the button in red
+    // if (selectedAnswer === answer && answer !== question.correctAnswer) {
+    //   return 'bg-red-600 text-white';
+    // }
     
     return 'bg-white text-gray-800';
   };
@@ -81,14 +100,32 @@ export default function QuizCard({ question, onAnswer, showResult, selectedAnswe
               </button>
             ))}
           </div>
+          
+          {/* OK button to manually move forward - only shown after overlay disappears for incorrect answers */}
+          {showResult && !showOverlay && selectedAnswer !== question.correctAnswer && (
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={() => {
+                  setIsFlipping(true);
+                  // Notify parent component to move to next question
+                  if (onNextQuestion) {
+                    onNextQuestion();
+                  }
+                }}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors"
+              >
+                OK, Next Question
+              </button>
+            </div>
+          )}
         </div>
       </div>
       
       {/* Overlay with checkmark or crossmark */}
-      {showResult && !isFlipping && (
+      {showResult && showOverlay && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg">
-          <div className={`flex items-center justify-center h-32 w-32 rounded-full ${isCorrect ? 'bg-green-500' : 'bg-red-500'} animate-scale-in`}>
-            {isCorrect ? (
+          <div className={`flex items-center justify-center h-32 w-32 rounded-full ${selectedAnswer === question.correctAnswer ? 'bg-green-500' : 'bg-red-500'} animate-scale-in`}>
+            {selectedAnswer === question.correctAnswer ? (
               <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </svg>
