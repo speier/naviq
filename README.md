@@ -1,5 +1,47 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Configuration
+
+This app has configurable authentication and payment features. You can enable/disable these features by editing `app/config.ts`:
+
+```typescript
+export const config = {
+  // Authentication configuration
+  auth: {
+    enabled: false, // Set to true to enable login/authentication
+    providers: ['google', 'github', 'discord', 'facebook'], // Available auth providers
+  },
+  
+  // Payment configuration
+  payment: {
+    enabled: false, // Set to true to enable payment verification
+    minimumAmount: 499, // Minimum payment amount in cents ($4.99)
+  },
+  
+  // App configuration
+  app: {
+    title: 'Navigation Quiz',
+    description: 'Test your knowledge of navigation concepts',
+  },
+};
+```
+
+### Features
+
+- **Authentication**: When enabled, users can log in using OAuth providers (Google, GitHub, Discord, Facebook)
+- **Payment Verification**: When enabled, integrates with Stripe to verify payments before allowing quiz access
+- **Configurable Providers**: Choose which OAuth providers to make available
+- **Flexible Settings**: Easy to toggle features on/off without code changes
+
+### Environment Variables
+
+If you enable authentication, you'll need:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+If you enable payments, you'll also need:
+- `STRIPE_SECRET_KEY`
+
 ## Getting Started
 
 First, run the development server:

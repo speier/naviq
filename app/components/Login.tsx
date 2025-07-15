@@ -1,28 +1,34 @@
 "use client"
 
 import { supabase } from "../lib/supabase"
+import { config } from "../config"
 
-const providers = [
-  { name: "google", label: "Google", icon: "🔍" },
-  { name: "github", label: "GitHub", icon: "🐙" },
-  { name: "discord", label: "Discord", icon: "🎮" },
-  { name: "facebook", label: "Facebook", icon: "📘" },
-]
+const providerConfig = {
+  google: { label: "Google", icon: "🔍" },
+  github: { label: "GitHub", icon: "🐙" },
+  discord: { label: "Discord", icon: "🎮" },
+  facebook: { label: "Facebook", icon: "📘" },
+}
 
 export default function Login() {
   const handleLogin = async (provider: string) => {
     await supabase.auth.signInWithOAuth({
-      provider,
+      provider: provider as any,
       options: {
         redirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined,
       },
     })
   }
 
+  const availableProviders = config.auth.providers.map(name => ({
+    name,
+    ...providerConfig[name as keyof typeof providerConfig]
+  }))
+
   return (
     <div className="space-y-3 max-w-sm mx-auto mt-12">
       <h3 className="text-lg font-semibold text-center mb-4">Sign in to continue</h3>
-      {providers.map(({ name, label, icon }) => (
+      {availableProviders.map(({ name, label, icon }) => (
         <button
           key={name}
           onClick={() => handleLogin(name)}

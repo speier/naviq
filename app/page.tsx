@@ -3,6 +3,7 @@ import path from 'path';
 import Quiz from './components/Quiz';
 import PaymentGate from "./components/PaymentGate";
 import { QuizQuestion } from './types';
+import { config } from './config';
 
 async function getQuizData() {
   const filePath = path.join(process.cwd(), 'public/data/navigation-quiz.json');
@@ -19,10 +20,10 @@ export default async function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-              Navigation Quiz
+              {config.app.title}
             </h1>
             <p className="mt-3 text-xl text-gray-500">
-              Test your knowledge of navigation concepts
+              {config.app.description}
             </p>
           </div>
           <Quiz questions={quizQuestions} />

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
+import { config } from "../../config"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2023-10-16" })
 const supabase = createClient(
@@ -9,6 +10,11 @@ const supabase = createClient(
 )
 
 export async function POST(req: NextRequest) {
+  // If payment is disabled, return that payment is not required
+  if (!config.payment.enabled) {
+    return NextResponse.json({ hasPaid: true, email: "payment-disabled" })
+  }
+
   try {
     const { userToken } = await req.json()
     // Verify Supabase user token
@@ -27,9 +33,9 @@ export async function POST(req: NextRequest) {
         customer: customer.id,
         limit: 10
       })
-      hasPaid = payments.data.some(payment =>
+      hasPaid = payments.data.some((payment: any) =>
         payment.status === "succeeded" &&
-        payment.amount >= 499 // $4.99 minimum
+        payment.amount >= config.payment.minimumAmount
       )
       if (hasPaid) break
     }

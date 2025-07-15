@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./lib/auth";
+import { config } from "./config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Navi Quiz",
-  description: "Quiz app for navigation",
+  title: config.app.title,
+  description: config.app.description,
 };
 
 export default function RootLayout({
@@ -28,9 +29,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        {config.auth.enabled ? (
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        ) : (
+          children
+        )}
       </body>
     </html>
   );

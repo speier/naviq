@@ -3,13 +3,19 @@
 import { useAuth } from "../lib/auth"
 import Login from "./Login"
 import { useState } from "react"
+import { config } from "../config"
 
 export default function PaymentGate({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth()
   const [showLogin, setShowLogin] = useState(false)
 
-  // Show login/register only if user clicks the button
-  if (showLogin) {
+  // If both auth and payment are disabled, just return children
+  if (!config.auth.enabled && !config.payment.enabled) {
+    return <>{children}</>
+  }
+
+  // Show login/register only if user clicks the button and auth is enabled
+  if (showLogin && config.auth.enabled) {
     return (
       <div className="max-w-md mx-auto mt-12">
         <button
@@ -23,8 +29,8 @@ export default function PaymentGate({ children }: { children: React.ReactNode })
     )
   }
 
-  // If logged in, show user info and logout
-  if (user && !loading) {
+  // If logged in and auth is enabled, show user info and logout
+  if (user && !loading && config.auth.enabled) {
     return (
       <div>
         <div className="flex items-center justify-end gap-3 mb-4">
@@ -44,17 +50,19 @@ export default function PaymentGate({ children }: { children: React.ReactNode })
     )
   }
 
-  // Default: show quiz and a login/register option
+  // Default: show quiz and optionally a login/register option
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowLogin(true)}
-          className="text-xs text-blue-600 underline hover:text-blue-800"
-        >
-          Login / Register
-        </button>
-      </div>
+      {config.auth.enabled && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowLogin(true)}
+            className="text-xs text-blue-600 underline hover:text-blue-800"
+          >
+            Login / Register
+          </button>
+        </div>
+      )}
       {children}
     </div>
   )

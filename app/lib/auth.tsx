@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react"
 import { supabase } from "../lib/supabase"
+import { config } from "../config"
 
 interface AuthContextType {
   user: any
@@ -20,6 +21,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!config.auth.enabled) {
+      setUser(null)
+      setLoading(false)
+      return
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
@@ -32,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signOut = () => {
+    if (!config.auth.enabled) return
     supabase.auth.signOut()
     setUser(null)
   }
